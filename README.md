@@ -52,3 +52,6 @@ python inferencia.py
 ```
 
 Presionar la tecla `q` en la ventana de visualización para liberar el búfer de la cámara y terminar el proceso del script de forma segura.
+
+##Video
+A continuación te compartimos un link con un video que presenta el modelo en acción: https://youtu.be/u9eHYYvYQwc
