@@ -1,47 +1,45 @@
-# YOLOv11: Detección del estado de la fruta y verdura en tiempo real
+# YOLOv11: Sistema de Detección del Estado de Frutas y Verduras en Tiempo Real
 
-Este repositorio contiene la implementación de inferencia local de un modelo YOLOv11 entrenado para detectar el estado de la fruta y verdura (descomposición y normal) mediante una cámara web en tiempo real.
+Este repositorio contiene la implementación de inferencia local de un modelo YOLOv11 entrenado para clasificar el estado de frutas y verduras (normal o en descomposición) mediante captura de video en tiempo real.
 
 ## Requisitos del Sistema
 
-*   **Sistema Operativo:** Fedora 44
-*   **Python:** 3.11+
-*   **Hardware:** Webcam estándar (`/dev/video0`).
-*   **No se requiere una GPU dedicada para la inferencia en tiempo real, es suficiente con gráficos integrados**
+*   **Sistema Operativo:** Probado y validado en Fedora 44.
+*   **Python:** 3.11 o superior.
+*   **Hardware:** Webcam estándar (dispositivo `/dev/video0`).
+*   **Aceleración de Hardware:** No requiere GPU dedicada. La inferencia es ejecutable en CPU o gráficos integrados manteniendo tasas de procesamiento funcionales.
 
 ## Instalación
 
+Es obligatorio utilizar un entorno virtual para evitar conflictos de dependencias con los paquetes del sistema operativo.
+
 1. Clonar el repositorio:
 ```bash
-git clone [https://github.com/](https://github.com/)[Tu-Usuario]/[Tu-Repo].git
-cd [Tu-Repo]
+git clone [https://github.com/CLRistian24/Proyecto_Deteccion_automatica-_deterioro_frutas_y_verduras.git](https://github.com/CLRistian24/Proyecto_Deteccion_automatica-_deterioro_frutas_y_verduras.git)
+cd Proyecto_Deteccion_automatica-_deterioro_frutas_y_verduras
 ```
 
-2. Crear y activar el entorno virtual:
+2. Crear y activar un entorno virtual:
 ```bash
-python -m venv venv
-
-# En Windows:
-venv\Scripts\activate
-# En Linux/macOS:
+python3 -m venv venv
 source venv/bin/activate
 ```
 
-3. Instalar las dependencias:
+3. Instalar la dependencia principal (`ultralytics` instalará automáticamente dependencias subyacentes requeridas como `torch` y `opencv-python`):
 ```bash
-pip install -r requirements.txt
+pip install ultralytics
 ```
-*Nota: Si se utiliza GPU, instalar los binarios de PyTorch correspondientes a la versión de CUDA instalada localmente antes de ejecutar las dependencias del archivo `requirements.txt`.*
 
 ## Configuración de Pesos (Weights)
 
-Descargar el archivo del modelo entrenado (`best.pt`) desde [Insertar enlace de descarga, ej. Google Drive / GitHub Releases] y colocarlo en el directorio raíz. La estructura del proyecto debe ser estrictamente la siguiente:
+Ubica el archivo del modelo entrenado (`best.pt`) y  verifica que esté en el directorio raíz. 
+
+La estructura del directorio debe ser exactamente la siguiente:
 
 ```text
-/tu-repo
+/Proyecto_Deteccion_automatica-_deterioro_frutas_y_verduras
   ├── best.pt
-  ├── [nombre_de_tu_script].py
-  ├── requirements.txt
+  ├── inferencia.py
   └── README.md
 ```
 
@@ -50,7 +48,7 @@ Descargar el archivo del modelo entrenado (`best.pt`) desde [Insertar enlace de 
 Para iniciar el flujo de video y la ejecución del modelo de inferencia, ejecutar en la terminal:
 
 ```bash
-python [nombre_de_tu_script].py
+python inferencia.py
 ```
 
-Presionar la tecla `q` en la ventana de visualización para liberar el búfer de la cámara y terminar el proceso de forma segura.
+Presionar la tecla `q` en la ventana de visualización para liberar el búfer de la cámara y terminar el proceso del script de forma segura.
