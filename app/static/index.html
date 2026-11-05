@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FreshGuard Vision AI v0.2 — Cloud-Edge Dashboard (UPIIT IPN)</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --ipn: #6b1d36;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 40px;
+    }
+    header {
+      background: linear-gradient(90deg, var(--ipn), #1e293b);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.3px; }
+    header .subtitle { font-size: 0.85rem; color: #cbd5e1; }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+    .badge.green { background: rgba(34, 197, 94, 0.15); color: var(--green); border-color: rgba(34, 197, 94, 0.35); }
+    .badge.red { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.45); }
+    .container { max-width: 1360px; margin: 20px auto; padding: 0 20px; }
+
+    /* KPI Row */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+    .kpi-card .label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-card .value { font-size: 1.65rem; font-weight: 700; margin-top: 4px; }
+    .kpi-card .sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 10px; margin-bottom: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; flex-wrap: wrap; }
+    .tab-btn {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.88rem;
+      transition: all 0.15s;
+    }
+    .tab-btn.active, .tab-btn:hover {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1.25fr; gap: 18px; }
+    @media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+    .card h2 { font-size: 1.05rem; margin-bottom: 12px; color: var(--accent); display: flex; align-items: center; justify-content: space-between; }
+    label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 4px; margin-top: 10px; }
+    input, select {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0f172a;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    button.primary {
+      margin-top: 14px;
+      width: 100%;
+      padding: 11px 16px;
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.92rem;
+    }
+    button.primary:hover { filter: brightness(1.08); }
+
+    .alert-banner {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .alert-banner.danger { display: block; background: rgba(239, 68, 68, 0.2); border: 1px solid var(--red); color: #fecaca; }
+    .alert-banner.ok { display: block; background: rgba(34, 197, 94, 0.15); border: 1px solid var(--green); color: #bbf7d0; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; background: rgba(15, 23, 42, 0.5); }
+    .preview-img {
+      width: 100%;
+      max-height: 430px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #090d16;
+    }
+    .tag-pill {
+      display: inline-block;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.76rem;
+      margin: 2px;
+    }
+    .statement-box {
+      background: #0b1120;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>FreshGuard Vision AI — Prototipo Avanzado v0.2 (Cloud-Edge)</h1>
+    <div class="subtitle">UPIIT - IPN | Ingeniería en IA | Detección de Deterioro en Frutas y Verduras (`YOLOv11n best.pt`)</div>
+  </div>
+  <div>
+    <span class="badge green">Modelo Activo: YOLOv11n (10 clases)</span>
+    <span class="badge">Privacidad LFPDPPP: Activa</span>
+    <span class="badge">FinOps Tagging: v0.2</span>
+  </div>
+</header>
+
+<div class="container">
+  <!-- KPI Row -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="label">Inspecciones del Día</div>
+      <div class="value" id="kpi-inspections">0</div>
+      <div class="sub" id="kpi-valid-sub">0 válidas / 0 rechazadas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Productos Frescos</div>
+      <div class="value" style="color: var(--green);" id="kpi-fresh">0</div>
+      <div class="sub">Estado conforme en anaquel</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Podridos Detectados (Merma)</div>
+      <div class="value" style="color: var(--red);" id="kpi-rotten">0</div>
+      <div class="sub" id="kpi-alerts">0 alertas enviadas a piso</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Rostros Anonimizados</div>
+      <div class="value" style="color: var(--amber);" id="kpi-faces">0</div>
+      <div class="sub">Privacidad en origen (LFPDPPP)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Latencia Media Edge</div>
+      <div class="value" id="kpi-latency">0 ms</div>
+      <div class="sub">SLA RNF02: &le; 30,000 ms</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Costo Unitario Medido</div>
+      <div class="value" style="color: var(--accent);" id="kpi-unitcost">$0.000148</div>
+      <div class="sub">Supuesto papel: $0.000150 MXN</div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-infer', this)">1. Inferencia en Vivo y Lotes (Req 1, 2, 3, 8)</button>
+    <button class="tab-btn" onclick="switchTab('tab-history', this)">2. Base de Datos: Historial del Día (Req 4)</button>
+    <button class="tab-btn" onclick="switchTab('tab-finops', this)">3. Instrumentación FinOps y Latencia (Req 5, 6)</button>
+    <button class="tab-btn" onclick="switchTab('tab-billing', this)">4. Medidor Facturable y Estado de Cuenta (Req 7)</button>
+  </div>
+
+  <!-- TAB 1: INFERENCIA -->
+  <div id="tab-infer" class="tab-panel active">
+    <div class="grid-2">
+      <div class="card">
+        <h2>Captura / Ingesta de Imagen en Nodo Edge</h2>
+        <form id="infer-form" onsubmit="submitInference(event)">
+          <label>Sucursal / Cliente (StoreID)</label>
+          <select id="store_id" name="store_id">
+            <option value="store-01">store-01 — Sucursal Piloto 01 Tlaxcala Centro</option>
+            <option value="store-02">store-02 — Sucursal Piloto 02 Apizaco Express</option>
+            <option value="store-03">store-03 — Sucursal Piloto 03 Chiautempan SmartMart</option>
+          </select>
+
+          <label>Identificador de Cámara (Seudonimizado SHA-256 en origen)</label>
+          <input type="text" id="camera_id" name="camera_id" value="cam-pasillo-perecederos-01" required />
+
+          <label>Zona de Anaquel Monitoreada</label>
+          <input type="text" id="aisle_zone" name="aisle_zone" value="Anaquel Perecederos A1" required />
+
+          <label>Umbral de Confianza YOLOv11 (conf)</label>
+          <input type="number" id="conf_threshold" name="conf_threshold" value="0.25" min="0.05" max="0.95" step="0.05" />
+
+          <label>Seleccionar Imagen (`.jpg`, `.png`, `.webp`) o archivo inválido para probar Req. 3</label>
+          <input type="file" id="image_file" name="file" required />
+
+          <button type="submit" class="primary">Ejecutar Pipeline: Anonimizar + Inferir YOLOv11 + Guardar en BD</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Resultado de Inspección y Alerta en Tiempo Real <span id="res-id-badge" class="badge">Esperando captura</span></h2>
+        <div id="alert-box" class="alert-banner"></div>
+        <img id="result-img" class="preview-img" src="" alt="Vista previa de detección YOLOv11" style="display:none;" />
+        <div id="result-meta" style="margin-top: 12px; font-size: 0.85rem; color: var(--muted);">
+          Sube una imagen de frutas/verduras para ejecutar el flujo completo extremo a extremo.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: HISTORIAL DE BASE DE DATOS -->
+  <div id="tab-history" class="tab-panel">
+    <div class="card">
+      <h2>
+        Historial de Verduras Detectadas a lo Largo del Día (`detections` &amp; `inspections` en SQLite/PostgreSQL)
+        <button onclick="loadDashboardData()" class="tab-btn" style="padding:5px 12px;">Actualizar BD</button>
+      </h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID Detección</th>
+              <th>ID Inspección</th>
+              <th>Hora (Timestamp)</th>
+              <th>Tienda</th>
+              <th>Zona / Anaquel</th>
+              <th>Producto</th>
+              <th>Estado Clasificado</th>
+              <th>Confianza YOLO</th>
+            </tr>
+          </thead>
+          <tbody id="detections-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Bitácora de Ingesta de Peticiones (Válidas e Inválidas — Requisito 3)</h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Inspección #</th>
+              <th>Fecha/Hora</th>
+              <th>Tienda</th>
+              <th>Cámara (SHA-256)</th>
+              <th>Archivo</th>
+              <th>Formato</th>
+              <th>Rostros Difuminados</th>
+              <th>Frescos / Podridos</th>
+              <th>Alerta Enviada</th>
+              <th>Latencia (ms)</th>
+            </tr>
+          </thead>
+          <tbody id="inspections-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: FINOPS -->
+  <div id="tab-finops" class="tab-panel">
+    <div class="card">
+      <h2>Instrumentación Cloud-Edge FinOps y Etiquetas de Imputación (Requisito 5)</h2>
+      <p style="font-size: 0.86rem; color: var(--muted); margin-bottom: 12px;">
+        Cada inferencia mide el tiempo real de procesamiento en el Edge, el uso de RAM y le asigna las etiquetas de imputación definidas en el Capítulo III para calcular el costo unitario real medido frente al supuesto del documento ($0.000150 MXN/imagen).
+      </p>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>FinOps ID</th>
+              <th>Inspección</th>
+              <th>Tiempo Total (ms)</th>
+              <th>CPU Time (ms)</th>
+              <th>RAM (MB)</th>
+              <th>Costo Energía Edge (MXN)</th>
+              <th>Costo Cloud Amortizado (MXN)</th>
+              <th>Costo Unitario Medido (MXN)</th>
+              <th>Etiquetas de Imputación (Tags)</th>
+            </tr>
+          </thead>
+          <tbody id="finops-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: FACTURACIÓN -->
+  <div id="tab-billing" class="tab-panel">
+    <div class="card">
+      <h2>
+        Medidor de Uso Facturable y Estado de Cuenta Mensual (Requisito 7)
+        <div>
+          <select id="billing-store-select" onchange="loadBillingStatement()" style="width:auto; display:inline-block;">
+            <option value="store-01">store-01 (Tlaxcala Centro)</option>
+            <option value="store-02">store-02 (Apizaco Express)</option>
+            <option value="store-03">store-03 (Chiautempan SmartMart)</option>
+          </select>
+        </div>
+      </h2>
+      <div id="billing-container" class="statement-box">Cargando estado de cuenta...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btn.classList.add('active');
+    loadDashboardData();
+  }
+
+  async function submitInference(e) {
+    e.preventDefault();
+    const form = document.getElementById('infer-form');
+    const formData = new FormData(form);
+    const alertBox = document.getElementById('alert-box');
+    const resImg = document.getElementById('result-img');
+    const resMeta = document.getElementById('result-meta');
+    const badge = document.getElementById('res-id-badge');
+
+    badge.textContent = "Procesando...";
+    try {
+      const resp = await fetch('/api/v1/infer', { method: 'POST', body: formData });
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        const errDetail = data.detail || {};
+        alertBox.className = 'alert-banner danger';
+        alertBox.textContent = `ARCHIVO RECHAZADO POR VALIDACIÓN (HTTP ${resp.status}): ${errDetail.error || JSON.stringify(data)}`;
+        resImg.style.display = 'none';
+        badge.textContent = `Inspección Fallida #${errDetail.inspection_id || ''}`;
+        loadDashboardData();
+        return;
+      }
+
+      badge.textContent = `Inspección #${data.inspection_id} (${data.finops.processing_time_ms.toFixed(1)} ms)`;
+      if (data.summary.alert_triggered) {
+        alertBox.className = 'alert-banner danger';
+        alertBox.textContent = data.summary.alert_message;
+      } else {
+        alertBox.className = 'alert-banner ok';
+        alertBox.textContent = data.summary.alert_message;
+      }
+
+      resImg.src = 'data:image/jpeg;base64,' + data.annotated_image_b64;
+      resImg.style.display = 'block';
+
+      resMeta.innerHTML = `
+        <strong>Resumen de Detección:</strong> ${data.summary.total_detected} productos (${data.summary.fresh_count} frescos, ${data.summary.rotten_count} podridos) |
+        <strong>Privacidad LFPDPPP:</strong> Cámara <code>${data.privacy_lfpdppp.camera_id_pseudonymized}</code>, ${data.privacy_lfpdppp.faces_detected_and_blurred} rostro(s) difuminado(s), EXIF eliminado |
+        <strong>FinOps Costo Unitario:</strong> $${data.finops.total_unit_cost_mxn.toFixed(7)} MXN
+      `;
+      loadDashboardData();
+    } catch (err) {
+      alertBox.className = 'alert-banner danger';
+      alertBox.textContent = 'Error de red: ' + err.message;
+    }
+  }
+
+  async function loadDashboardData() {
+    try {
+      const [histRes, finRes] = await Promise.all([
+        fetch('/api/v1/history?limit=60'),
+        fetch('/api/v1/finops?limit=60')
+      ]);
+      const hist = await histRes.json();
+      const fin = await finRes.json();
+
+      const k = hist.daily_kpis;
+      document.getElementById('kpi-inspections').textContent = k.total_inspections;
+      document.getElementById('kpi-valid-sub').textContent = `${k.valid_inspections} válidas / ${k.invalid_inspections} rechazadas`;
+      document.getElementById('kpi-fresh').textContent = k.total_fresh_detected;
+      document.getElementById('kpi-rotten').textContent = k.total_rotten_detected;
+      document.getElementById('kpi-alerts').textContent = `${k.total_alerts_triggered} alertas enviadas a piso`;
+      document.getElementById('kpi-faces').textContent = k.total_faces_blurred;
+      document.getElementById('kpi-latency').textContent = `${k.avg_latency_ms.toFixed(1)} ms`;
+      document.getElementById('kpi-unitcost').textContent = `$${fin.finops_summary.measured_unit_cost_mxn.toFixed(6)}`;
+
+      const detBody = document.getElementById('detections-tbody');
+      detBody.innerHTML = hist.recent_detections.map(d => `
+        <tr>
+          <td>#${d.detection_id}</td>
+          <td>#${d.inspection_id}</td>
+          <td>${d.created_at}</td>
+          <td><code>${d.store_id}</code></td>
+          <td>${d.aisle_zone}</td>
+          <td><strong>${d.produce_type}</strong> (<code>${d.class_name}</code>)</td>
+          <td><span class="badge ${d.condition_state === 'Rotten' ? 'red' : 'green'}">${d.condition_state === 'Rotten' ? 'PODRIDO (MERMA)' : 'FRESCO'}</span></td>
+          <td>${(d.confidence * 100).toFixed(1)}%</td>
+        </tr>
+      `).join('') || '<tr><td colspan="8">Sin detecciones registradas aún.</td></tr>';
+
+      const inspBody = document.getElementById('inspections-tbody');
+      inspBody.innerHTML = hist.recent_inspections.map(i => `
+        <tr>
+          <td>#${i.inspection_id}</td>
+          <td>${i.created_at}</td>
+          <td><code>${i.store_id}</code></td>
+          <td><code>${i.camera_hash}</code></td>
+          <td>${i.filename}</td>
+          <td><span class="badge ${i.is_valid_format ? 'green' : 'red'}">${i.is_valid_format ? 'VÁLIDO' : 'RECHAZADO: ' + (i.error_message || '')}</span></td>
+          <td>${i.faces_blurred}</td>
+          <td>${i.fresh_count} Frescos / <strong style="color:var(--red)">${i.rotten_count} Podridos</strong></td>
+          <td>${i.alert_triggered ? '<span class="badge red">ALERTA ENVIADA</span>' : '<span class="badge">Normal</span>'}</td>
+          <td>${i.latency_ms.toFixed(2)} ms</td>
+        </tr>
+      `).join('');
+
+      const finBody = document.getElementById('finops-tbody');
+      finBody.innerHTML = fin.logs.map(f => `
+        <tr>
+          <td>#${f.finops_id}</td>
+          <td>#${f.inspection_id}</td>
+          <td>${f.processing_time_ms.toFixed(2)} ms</td>
+          <td>${f.cpu_time_ms.toFixed(2)} ms</td>
+          <td>${f.memory_mb.toFixed(1)} MB</td>
+          <td>$${f.edge_energy_cost_mxn.toFixed(8)}</td>
+          <td>$${f.cloud_amortized_cost_mxn.toFixed(8)}</td>
+          <td><strong>$${f.total_unit_cost_mxn.toFixed(8)} MXN</strong></td>
+          <td>
+            <span class="tag-pill">Project:${f.tag_project}</span>
+            <span class="tag-pill">Env:${f.tag_environment}</span>
+            <span class="tag-pill">Store:${f.tag_store_id}</span>
+            <span class="tag-pill">Ver:${f.tag_model_version}</span>
+          </td>
+        </tr>
+      `).join('');
+
+      loadBillingStatement();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function loadBillingStatement() {
+    const storeId = document.getElementById('billing-store-select').value;
+    const container = document.getElementById('billing-container');
+    try {
+      const res = await fetch(`/api/v1/billing/${storeId}`);
+      const st = await res.json();
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:14px;">
+          <div>
+            <h3 style="color:var(--accent);">${st.provider.name}</h3>
+            <div style="font-size:0.82rem; color:var(--muted);">RFC Emisor: ${st.provider.rfc} | Centro de Costos: ${st.provider.cost_center}</div>
+          </div>
+          <div style="text-align:right;">
+            <div><strong>Folio Estado de Cuenta:</strong> <code>${st.statement_folio}</code></div>
+            <div style="font-size:0.82rem; color:var(--muted);">Periodo Facturable: ${st.billing_period} | Emisión: ${st.issued_at}</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <h4 style="margin-bottom:8px;">Datos del Cliente y Consumo Medido</h4>
+            <table>
+              <tr><th>Sucursal Cliente</th><td>${st.client.store_name} (<code>${st.client.store_id}</code>)</td></tr>
+              <tr><th>RFC Cliente / Plan</th><td>${st.client.rfc} — ${st.client.plan_name}</td></tr>
+              <tr><th>Inspecciones Válidas Contabilizadas</th><td><strong>${st.usage_metrics.billable_inspections}</strong> (Cuota incluida: ${st.usage_metrics.included_quota_units.toLocaleString()})</td></tr>
+              <tr><th>Peticiones Inválidas Rechazadas (Sin Cobro)</th><td>${st.usage_metrics.rejected_invalid_files}</td></tr>
+              <tr><th>Productos Analizados en Anaquel</th><td>${st.usage_metrics.total_produce_evaluated} (${st.usage_metrics.fresh_items_count} frescos / <strong style="color:var(--red)">${st.usage_metrics.rotten_items_count} podridos</strong>)</td></tr>
+              <tr><th>Alertas de Retiro Enviadas / Rostros Anonimizados</th><td>${st.usage_metrics.alerts_dispatched} alertas / ${st.usage_metrics.faces_anonymized_lfpdppp} rostros (LFPDPPP)</td></tr>
+              <tr><th>Verificación de SLA (RNF02 &le; ${st.sla_verification.committed_max_latency_sec}s)</th><td><span class="badge green">${st.sla_verification.sla_status}</span> (Promedio medido: ${st.sla_verification.measured_avg_latency_ms} ms)</td></tr>
+            </table>
+          </div>
+          <div>
+            <h4 style="margin-bottom:8px;">Desglose Financiero y Validación de Economía Unitaria</h4>
+            <table>
+              <tr><th>Suscripción Mensual Base SaaS Edge</th><td>$${st.charges_mxn.monthly_base_subscription.toFixed(2)} MXN</td></tr>
+              <tr><th>Cargo por Unidades Excedentes (${st.usage_metrics.overage_units} u @ $${st.charges_mxn.overage_unit_rate})</th><td>$${st.charges_mxn.overage_charge.toFixed(2)} MXN</td></tr>
+              <tr><th>Subtotal Facturado</th><td><strong>$${st.charges_mxn.subtotal.toFixed(2)} MXN</strong></td></tr>
+              <tr><th>IVA (16%)</th><td>$${st.charges_mxn.iva_16_pct.toFixed(2)} MXN</td></tr>
+              <tr><th>Total a Pagar del Periodo</th><td><strong style="color:var(--green); font-size:1.05rem;">$${st.charges_mxn.total_due.toFixed(2)} MXN</strong></td></tr>
+              <tr><th>Costo Unitario Supuesto vs. Medido FinOps</th><td>Supuesto: $${st.unit_economics_validation.paper_assumed_unit_cost_mxn.toFixed(6)} | <strong>Medido: $${st.unit_economics_validation.measured_finops_unit_cost_mxn.toFixed(6)} MXN</strong></td></tr>
+              <tr><th>COGS Mensual Tienda (Soporte $300 + Infra 50k imgs)</th><td>$${st.unit_economics_validation.total_monthly_cogs_mxn.toFixed(2)} MXN (Infra: $${st.unit_economics_validation.projected_50k_imgs_infra_cost_mxn.toFixed(2)})</td></tr>
+              <tr><th>Utilidad Bruta y Margen Unitario de la Tarifa</th><td><strong>$${st.unit_economics_validation.gross_profit_per_store_mxn.toFixed(2)} MXN (${st.unit_economics_validation.gross_margin_pct}% margen bruto)</strong></td></tr>
+            </table>
+          </div>
+        </div>
+      `;
+    } catch (e) {
+      container.textContent = 'Error al generar estado de cuenta: ' + e.message;
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', loadDashboardData);
+</script>
+</body>
+</html>
